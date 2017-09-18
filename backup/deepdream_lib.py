@@ -41,6 +41,8 @@ def make_directories(directories):
             os.makedirs(directory)
             print("Folder \"%s\" created." %directory.strip('/'))
 
+    return
+
 last_percent_reported = None
 def download_progress_hook(count, blockSize, totalSize):
   '''
@@ -59,6 +61,8 @@ def download_progress_hook(count, blockSize, totalSize):
       sys.stdout.flush()
 
     last_percent_reported = percent
+
+    return
 
 def unzip_files(src, dst, foi = None, expected_size = None):
     '''
@@ -102,6 +106,7 @@ def showarray(a):
     '''
     im = Image.fromarray(a)
     im.show()
+    return
 
 def savearray(a, file_path):
     '''
@@ -109,6 +114,7 @@ def savearray(a, file_path):
     '''
     im = Image.fromarray(a)
     im.save(file_path)
+    return
 
 def visstd(a, s = 0.1):
     '''
@@ -125,8 +131,7 @@ class deepdream(object):
         self.model = self.prepare_networks()
         # Initialize the model
         self.load_graph(model = self.model)
-        # Transform the resize function
-        # This is what they did, but I am not sure why.
+
         self.resize = self.tffunc(np.float32, np.int32)(self.resize)
 
     def prepare_networks(self):
@@ -170,6 +175,8 @@ class deepdream(object):
         print('Number of layers in the model: %d.' %len(layers))
         print('Total number of feature channels in the model: %d.' %sum(feature_nums))
 
+        return
+
     def T(self, layer):
         '''
         Helper for getting layer output tensor.
@@ -209,9 +216,10 @@ class deepdream(object):
         savearray(img, file_path)
         print('Image \"%s\" saved.' %output_filename)
 
+        return
+
     def tffunc(self, *argtypes):
-        '''
-        Helper that transforms TF-graph generating function into a regular one.
+        '''Helper that transforms TF-graph generating function into a regular one.
         See "resize" function below.
         '''
         placeholders = list(map(tf.placeholder, argtypes))
@@ -223,9 +231,6 @@ class deepdream(object):
         return wrap
     
     def resize(self, img, size):
-        '''
-        Resize image.
-        '''
         img = tf.expand_dims(img, 0)
         return tf.image.resize_bilinear(img, size)[0,:,:,:]
     
