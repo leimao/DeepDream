@@ -7,7 +7,6 @@ University of Chicago
 Developed and Tested in Python 3.6
 '''
 import os
-from io import BytesIO
 import sys
 import zipfile
 import numpy as np
@@ -218,7 +217,7 @@ class deepdream(object):
         def wrap(f):
             out = f(*placeholders)
             def wrapper(*args, **kw):
-                return out.eval(dict(zip(placeholders, args)), session=kw.get('session'))
+                return out.eval(dict(zip(placeholders, args)), session = kw.get('session'))
             return wrapper
         return wrap
     
@@ -230,9 +229,11 @@ class deepdream(object):
         return tf.image.resize_bilinear(img, size)[0,:,:,:]
     
     def calc_grad_tiled(self, img, t_grad, tile_size=512):
-        '''Compute the value of tensor t_grad over the image in a tiled way.
+        '''
+        Compute the value of tensor t_grad over the image in a tiled way.
         Random shifts are applied to the image to blur tile boundaries over 
-        multiple iterations.'''
+        multiple iterations.
+        '''
         sz = tile_size
         h, w = img.shape[:2]
         sx, sy = np.random.randint(sz, size=2)
@@ -245,7 +246,7 @@ class deepdream(object):
                 grad[y:y+sz,x:x+sz] = g
         return np.roll(np.roll(grad, -sx, 1), -sy, 0) 
 
-    def render_deepdream(self, t_obj, output_filename, img0 = None, iter_n=10, step=1.5, octave_n=4, octave_scale=1.4):
+    def render_deepdream(self, t_obj, output_filename, img0 = None, iter_n = 10, step = 1.5, octave_n = 4, octave_scale = 1.4):
         '''
         Render user's image with learned pattern from neural network, and output the image.
         The image could be any size.
@@ -294,6 +295,11 @@ class deepdream(object):
         '''
         In progress
         '''
+
+    def customize_deepdream():
+        '''
+        '''
+        # Get image features
 
 
 
