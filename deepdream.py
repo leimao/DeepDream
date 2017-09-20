@@ -4,7 +4,7 @@ Lei Mao
 9/17/2017
 Department of Computer Science
 University of Chicago
-Developed and Tested in Python 3.6
+Developed and Tested in TensorFlow 1.3 and Python 3.6
 '''
 import os
 import sys
