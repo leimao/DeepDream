@@ -228,7 +228,7 @@ class deepdream(object):
         img = tf.expand_dims(img, 0)
         return tf.image.resize_bilinear(img, size)[0,:,:,:]
     
-    def calc_grad_tiled(self, img, t_grad, tile_size=512):
+    def calc_grad_tiled(self, img, t_grad, tile_size = 224):
         '''
         Compute the value of tensor t_grad over the image in a tiled way.
         Random shifts are applied to the image to blur tile boundaries over 
@@ -236,7 +236,7 @@ class deepdream(object):
         '''
         sz = tile_size
         h, w = img.shape[:2]
-        sx, sy = np.random.randint(sz, size=2)
+        sx, sy = np.random.randint(sz, size = 2)
         img_shift = np.roll(np.roll(img, sx, 1), sy, 0)
         grad = np.zeros_like(img)
         for y in range(0, max(h-sz//2, sz),sz):
@@ -253,7 +253,7 @@ class deepdream(object):
         '''
         # If no input image provided, generate a random image with noise.
         if img0 is None:
-            img0 = np.random.uniform(size=(224,224,3)) + 100.0
+            img0 = np.random.uniform(size = (224,224,3)) + 100.0
 
         # Define the optimization objective
         t_score = tf.reduce_mean(t_obj)
@@ -293,25 +293,128 @@ class deepdream(object):
 
     def render_deepdreamvideo():
         '''
-        In progress
+        In progress.
         '''
 
-    def customize_deepdream():
+    def get_layer_name_maximum_dot_product():
         '''
+        Find the layer name of the maximum of the dot products between the corresponding layer tensors
         '''
-        # Get image features
+
+    def get_features_from_graph(self, layer, img):
+        '''
+        Get deep features of image from the layer specified in the graph. 
+        '''
+
+        t_obj = self.T(layer = layer)
+        g = self.sess.run(t_obj, {self.t_input: img})
+
+        return g[0].transpose(2,0,1)
+
+    def calc_grad_tiled_maximum_dot_product(self, layer, img, guide_features, tile_size = 224):
+        '''
+        Compute the value of tensor t_grad over the image in a tiled way.
+        Random shifts are applied to the image to blur tile boundaries over 
+        multiple iterations.
+        t_obj is selected to layer where the product of guide_feature and corresponding img features are maximum. 
+        '''
+        sz = tile_size
+        h, w = img.shape[:2]
+        print('########')
+        print(img.shape)
+
+        print('########')
+
+        sx, sy = np.random.randint(sz, size = 2)
+        img_shift = np.roll(np.roll(img, sx, 1), sy, 0)
+        grad = np.zeros_like(img)
+        for y in range(0, max(h-sz//2, sz),sz):
+            for x in range(0, max(w-sz//2, sz),sz):
+                sub = img_shift[y:y+sz,x:x+sz]
+                print(y)
+                print(y+sz)
+                print('########')
+                print(img_shift.shape)
+                print(sub.shape)
+                print('########')
 
 
+                sub_features = self.get_features_from_graph(layer = layer, img = sub)
+                sub_features = sub_features.reshape(sub_features.shape[0], -1)
+
+                dot_products = sub_features * (guide_features.T)
+                maximum_index = dot_products.argmax(axis = 1)
+
+                guide_features_correspondence = guide_features[maximum_index, :]
+                
+                t_obj = tf.reshape(tf.transpose(self.T(layer = layer), perm = [2,0,1]), [-1])
+                t_score = tf.matmul(t_obj, (guide_features_correspondence.reshape(-1).T))
+                # Automatic differentiation
+                t_grad = tf.gradients(t_score, self.t_input)[0]
+
+                g = self.sess.run(t_grad, {self.t_input:sub})
+                grad[y:y+sz,x:x+sz] = g
+
+        return np.roll(np.roll(grad, -sx, 1), -sy, 0) 
+
+
+    def customize_deepdream(self, layer, output_filename, guide_img = None, img0 = None, iter_n = 10, step = 1.5, octave_n = 4, octave_scale = 1.4):
+        '''
+        guide_image has to be the same size as the input of the neural network.
+        '''
+        # If no input image provided, generate a random image with noise.
+        if guide_img is None:
+            guide_img = np.random.uniform(size = (224,224,3)) + 100.0
+        # If no input image provided, generate a random image with noise.
+        if img0 is None:
+            img0 = np.random.uniform(size = (224,224,3)) + 100.0
+
+        print(guide_img.shape)
+        guide_features = self.get_features_from_graph(layer = layer, img = guide_img)
+        guide_features = guide_features.reshape(guide_features.shape[0], -1)
+
+        # Split the image into a number of octaves
+        img = img0
+        octaves = []
+        for _ in range(octave_n-1):
+            hw = img.shape[:2]
+            lo = self.resize(img, np.int32(np.float32(hw)/octave_scale))
+            hi = img-self.resize(lo, hw)
+            img = lo
+            octaves.append(hi)
+        
+        # Generate details octave by octave
+        for octave in range(octave_n):
+            if octave>0:
+                hi = octaves[-octave]
+                img = self.resize(img, hi.shape[:2])+hi
+            for _ in range(iter_n):
+                g = self.calc_grad_tiled_maximum_dot_product(layer = layer, img = img, guide_features = guide_features)
+                img += g*(step / (np.abs(g).mean()+1e-7))
+
+
+            # Image clip and rescale 256 color
+            img = np.uint8(np.clip(img, 0, 255))
+            # Show image
+            showarray(img)
+
+        # Save image
+        file_path = OUTPUT_DIR + output_filename
+        savearray(img, file_path)
+        print('Image \"%s\" saved.' %output_filename)
 
 
 def main():
 
     dream = deepdream()
+    
     layer = 'mixed4d_3x3_bottleneck_pre_relu'
-
+    
+    '''
     # Picking some feature channel to visualize
     channel = 139
     dream_obj = dream.T(layer = layer)[:,:,:,channel]
+    print(dream_obj.get_shape())
 
     #dream.render_naive(t_obj = dream_obj, output_filename = 'render_naive_demo.jpeg')
 
@@ -319,10 +422,16 @@ def main():
     img0 = Image.open('inputs/leaves.jpg')
     img0 = np.float32(img0)
 
+    # I am not sure why this 'mixed4c' layer will work since it is not exactly in the layers.
+    # To check all the layer names: 
+    # http://storage.googleapis.com/deepdream/visualz/tensorflow_inception/index.html
     layer = 'mixed4c'
     dream_obj = tf.square(dream.T(layer = layer))
 
     dream.render_deepdream(t_obj = dream_obj, img0 = img0, output_filename = 'render_large_demo.jpeg')
+    '''
+    dream.customize_deepdream(layer = layer, output_filename = 'customization_demo')
+
 
 
 if __name__ == '__main__':
