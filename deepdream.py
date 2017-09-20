@@ -175,8 +175,8 @@ class deepdream(object):
         '''
         layers = [op.name for op in self.graph.get_operations() if op.type=='Conv2D' and 'import/' in op.name]
         feature_nums = [int(self.graph.get_tensor_by_name(name+':0').get_shape()[-1]) for name in layers]
-        for i in xrange(len(layers)):
-            print(layers[i], feature_nums[i])
+        for i in range(len(layers)):
+            print((layers[i].split('import/')[1]).split('/conv')[0], feature_nums[i])
 
 
     def T(self, layer):
@@ -414,16 +414,17 @@ class deepdream(object):
 def main():
 
     dream = deepdream()
-    
+
     layer = 'mixed4d_3x3_bottleneck_pre_relu'
     
-    '''
+
     # Picking some feature channel to visualize
     channel = 139
+    '''
     dream_obj = dream.T(layer = layer)[:,:,:,channel]
-    print(dream_obj.get_shape())
 
-    #dream.render_naive(t_obj = dream_obj, output_filename = 'render_naive_demo.jpeg')
+    dream.render_naive(t_obj = dream_obj, output_filename = 'render_naive_demo.jpeg')
+    '''
 
 
     img0 = Image.open('inputs/leaves.jpg')
@@ -432,12 +433,15 @@ def main():
     # I am not sure why this 'mixed4c' layer will work since it is not exactly in the layers.
     # To check all the layer names: 
     # http://storage.googleapis.com/deepdream/visualz/tensorflow_inception/index.html
-    layer = 'mixed4c'
-    dream_obj = tf.square(dream.T(layer = layer))
+    #layer = 'mixed4c'
+    #dream_obj = tf.square(dream.T(layer = layer))
+
+
+    dream_obj = dream.T(layer = layer)[:,:,:,channel]
 
     dream.render_deepdream(t_obj = dream_obj, img0 = img0, output_filename = 'render_large_demo.jpeg')
-    '''
-    dream.customize_deepdream(layer = layer, output_filename = 'customization_demo')
+
+    #dream.customize_deepdream(layer = layer, output_filename = 'customization_demo')
 
 
 
