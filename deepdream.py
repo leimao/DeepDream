@@ -169,6 +169,16 @@ class deepdream(object):
         print('Number of layers in the model: %d.' %len(layers))
         print('Total number of feature channels in the model: %d.' %sum(feature_nums))
 
+    def show_layers(self):
+        '''
+        Show available layers and the corresponding number of channels
+        '''
+        layers = [op.name for op in self.graph.get_operations() if op.type=='Conv2D' and 'import/' in op.name]
+        feature_nums = [int(self.graph.get_tensor_by_name(name+':0').get_shape()[-1]) for name in layers]
+        for i in xrange(len(layers)):
+            print(layers[i], feature_nums[i])
+
+
     def T(self, layer):
         '''
         Helper for getting layer output tensor.
@@ -305,11 +315,13 @@ class deepdream(object):
         '''
         Get deep features of image from the layer specified in the graph. 
         '''
+        '''
 
         t_obj = self.T(layer = layer)
         g = self.sess.run(t_obj, {self.t_input: img})
 
         return g[0].transpose(2,0,1)
+        '''
 
     def calc_grad_tiled_maximum_dot_product(self, layer, img, guide_features, tile_size = 224):
         '''
@@ -318,12 +330,10 @@ class deepdream(object):
         multiple iterations.
         t_obj is selected to layer where the product of guide_feature and corresponding img features are maximum. 
         '''
+        '''
         sz = tile_size
         h, w = img.shape[:2]
-        print('########')
-        print(img.shape)
 
-        print('########')
 
         sx, sy = np.random.randint(sz, size = 2)
         img_shift = np.roll(np.roll(img, sx, 1), sy, 0)
@@ -331,12 +341,6 @@ class deepdream(object):
         for y in range(0, max(h-sz//2, sz),sz):
             for x in range(0, max(w-sz//2, sz),sz):
                 sub = img_shift[y:y+sz,x:x+sz]
-                print(y)
-                print(y+sz)
-                print('########')
-                print(img_shift.shape)
-                print(sub.shape)
-                print('########')
 
 
                 sub_features = self.get_features_from_graph(layer = layer, img = sub)
@@ -356,11 +360,13 @@ class deepdream(object):
                 grad[y:y+sz,x:x+sz] = g
 
         return np.roll(np.roll(grad, -sx, 1), -sy, 0) 
+        '''
 
 
     def customize_deepdream(self, layer, output_filename, guide_img = None, img0 = None, iter_n = 10, step = 1.5, octave_n = 4, octave_scale = 1.4):
         '''
         guide_image has to be the same size as the input of the neural network.
+        '''
         '''
         # If no input image provided, generate a random image with noise.
         if guide_img is None:
@@ -402,6 +408,7 @@ class deepdream(object):
         file_path = OUTPUT_DIR + output_filename
         savearray(img, file_path)
         print('Image \"%s\" saved.' %output_filename)
+        '''
 
 
 def main():
