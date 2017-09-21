@@ -84,14 +84,14 @@ Apply feature pattern learned in a certain channel of a certain layer in the neu
 -r image_path layer_name channel_number, --render image_path layer_name channel_number
 
 ```shell
-python deepdream_api.py -r inputs/pilatus800.jpg mixed4d_3x3_bottleneck_pre_relu 20 railgun_deepdream.jpeg
+python deepdream_api.py -r inputs/pilatus800.jpg mixed4d_3x3_bottleneck_pre_relu 20 pilatus800_deepdream.jpeg
 ```
 
 ![](inputs/pilatus800.jpg)
 
 **Output**
 
-![](outputs/railgun_deepdream.jpeg)
+![](outputs/pilatus800_deepdream.jpeg)
 
 ### References
 
