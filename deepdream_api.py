@@ -1,9 +1,14 @@
+'''
+Google DeepDream Local API
+Lei Mao
+9/17/2017
+Department of Computer Science
+University of Chicago
+Developed and Tested in TensorFlow 1.3 and Python 3.6
+'''
 
-
-from deepdream import deepdream
 import argparse
-import numpy as np
-from PIL import Image
+
 
 def main():
 
@@ -30,6 +35,8 @@ def main():
     args = parser.parse_args()
 
     if args.list:
+
+        from deepdream import deepdream
         dream = deepdream()
         dream.show_layers()
 
@@ -38,16 +45,21 @@ def main():
         channel = int(args.preview[1])
         output_filename = str(args.preview[2])
 
+        from deepdream import deepdream
         dream = deepdream()
         dream_obj = dream.T(layer = layer)[:,:,:,channel]
         dream.render_naive(t_obj = dream_obj, output_filename = output_filename, iter_n = 30)
 
     if args.render:
+
         image_path = str(args.render[0])
         layer = str(args.render[1])
         channel = int(args.render[2])
         output_filename = str(args.render[3])
 
+        from deepdream import deepdream
+        import numpy as np
+        from PIL import Image
         dream = deepdream()
         img0 = Image.open(image_path)
         img0 = np.float32(img0)
