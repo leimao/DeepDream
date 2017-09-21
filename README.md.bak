@@ -1,0 +1,30 @@
+# Google DeepDream Local API
+
+Lei Mao
+
+9/17/2017
+
+Department of Computer Science
+
+University of Chicago
+
+## Description
+
+
+
+## Requirements
+
+* Python 3.6
+
+## Dependencies
+
+* tensorflow 1.3
+* numpy
+* PIL
+* os
+* sys
+* zipfile
+* six
+* argparse
+
+## 
