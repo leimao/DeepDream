@@ -35,7 +35,6 @@ To check the available layer names and channel numbers for the deepdream program
 
 *Input*
 
-
 ```shell
 python deepdream_api.py -l
 ```
