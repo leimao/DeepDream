@@ -51,24 +51,33 @@ import/mixed3b_3x3_pre_relu/conv 192
 import/mixed3b_5x5_bottleneck_pre_relu/conv 32
 ...
 ```
-Left is the layer name, right is the number of channels in the layer.
+On the left it is the layer name, on the right it is the number of channels in the layer.
 
 
 ### Preview the feature pattern of the neural network
 Input
+
 ```shell
 python deepdream_api.py -p mixed4d_3x3_bottleneck_pre_relu 20 feature_pattern.jpeg
 ```
+
 Output
+
 ![](outputs/feature_pattern.jpeg)
 
 
+# Render the image with the features from the neural network
+
 Input
+
 ```shell
 python deepdream_api.py -r inputs/pilatus800.jpg mixed4d_3x3_bottleneck_pre_relu 20 railgun_deepdream.jpeg
 ```
+
 ![](inputs/pilatus800.jpg)
+
 Output
+
 ![](outputs/railgun_deepdream.jpeg)
 
 

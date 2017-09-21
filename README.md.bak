@@ -30,10 +30,11 @@ The development of this API is still in progress. More functions will be added i
 ## 
 
 ### List the available layers and the number of channels
-
+Input
 ```shell
 python deepdream_api.py -l
 ```
+Output
 ```shell
 import/conv2d0_pre_relu/conv 64
 import/conv2d1_pre_relu/conv 64
@@ -54,15 +55,21 @@ Left is the layer name, right is the number of channels in the layer.
 
 
 ### Preview the feature pattern of the neural network
-
+Input
 ```shell
 python deepdream_api.py -p mixed4d_3x3_bottleneck_pre_relu 20 feature_pattern.jpeg
 ```
+Output
+![](outputs/feature_pattern.jpeg)
 
 
+Input
 ```shell
 python deepdream_api.py -r inputs/pilatus800.jpg mixed4d_3x3_bottleneck_pre_relu 20 railgun_deepdream.jpeg
 ```
+![](inputs/pilatus800.jpg)
+Output
+![](outputs/railgun_deepdream.jpeg)
 
 
 
