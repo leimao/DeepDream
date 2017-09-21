@@ -66,7 +66,7 @@ Output
 ![](outputs/feature_pattern.jpeg)
 
 
-# Render the image with the features from the neural network
+### Render the image with the features from the neural network
 
 Input
 
