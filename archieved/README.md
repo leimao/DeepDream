@@ -67,28 +67,12 @@ To preview the feature pattern learned in a certain channel of a certain layer i
 -p layer_name channel_number, --preview layer_name channel_number
 
 ```shell
-python deepdream_api.py -p mixed4b_1x1_pre_relu 70 pattern.jpeg
+python deepdream_api.py -p mixed4d_3x3_bottleneck_pre_relu 20 feature_pattern.jpeg
 ```
 
 **Output**
 
-![](outputs/pattern.jpeg)
-
-### Preview the feature pattern of the neural network with Laplacian Pyramid Gradient Normalization
-
-To preview the feature pattern learned in a certain channel of a certain layer in the neural network with Laplacian Pyramid Gradient Normalization. High frequency patterns were suppressed by Laplacian Pyramid Gradient Normalization.
-
-**Input**
-
--pl layer_name channel_number, --preview layer_name channel_number
-
-```shell
-python deepdream_api.py -pl mixed4b_1x1_pre_relu 70 pattern_lap.jpeg
-```
-
-**Output**
-
-![](outputs/pattern_lap.jpeg)
+![](outputs/feature_pattern.jpeg)
 
 
 ### Render the image with the features from the neural network
@@ -100,34 +84,14 @@ Apply feature pattern learned in a certain channel of a certain layer in the neu
 -r image_path layer_name channel_number, --render image_path layer_name channel_number
 
 ```shell
-python deepdream_api.py -r inputs/sunday_afternoon.jpg mixed4b_1x1_pre_relu 70 sunday_afternoon_deepdream.jpeg
+python deepdream_api.py -r inputs/pilatus800.jpg mixed4d_3x3_bottleneck_pre_relu 20 pilatus800_deepdream.jpeg
 ```
 
-![](inputs/sunday_afternoon.jpg)
+![](inputs/pilatus800.jpg)
 
 **Output**
 
-![](outputs/sunday_afternoon_deepdream.jpeg)
-
-
-### Render the image with the features from the neural network with Laplacian Pyramid Gradient Normalization
-
-Apply feature pattern learned in a certain channel of a certain layer in the neural network to the image that the user provided.
-
-**Input**
-
--rl image_path layer_name channel_number, --render image_path layer_name channel_number
-
-```shell
-python deepdream_api.py -rl inputs/sunday_afternoon.jpg mixed4b_1x1_pre_relu 70 sunday_afternoon_deepdream_lap.jpeg
-```
-
-![](inputs/sunday_afternoon.jpg)
-
-**Output**
-
-![](outputs/sunday_afternoon_deepdream_lap.jpeg)
-
+![](outputs/pilatus800_deepdream.jpeg)
 
 ### References
 

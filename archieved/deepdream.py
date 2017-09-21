@@ -13,7 +13,6 @@ import numpy as np
 from six.moves.urllib.request import urlretrieve
 import tensorflow as tf
 from PIL import Image
-from functools import partial
 
 NETWORK_URL = 'https://storage.googleapis.com/download.tensorflow.org/models/inception5h.zip'
 NETWORK_FILE_ZIPPED = 'inception5h.zip'
@@ -25,13 +24,6 @@ DOWNLOAD_DIR = 'downloads/'
 INPUT_DIR = 'inputs/'
 OUTPUT_DIR = 'outputs/'
 RAND_SEED = 0
-
-
-# Laplacian Pyramid Gradient Normalization Global Constant
-k = np.float32([1,4,6,4,1])
-k = np.outer(k, k)
-k5x5 = k[:,:,None,None]/k.sum()*np.eye(3, dtype=np.float32)
-del k
 
 # No random process
 # np.random.seed(RAND_SEED)
@@ -132,6 +124,9 @@ class deepdream(object):
         self.model = self.prepare_networks()
         # Initialize the model
         self.load_graph(model = self.model)
+        # Transform the resize function
+        # This is what they did, but I am not sure why.
+        self.resize = self.tffunc(np.float32, np.int32)(self.resize)
 
     def prepare_networks(self):
         '''
@@ -197,7 +192,7 @@ class deepdream(object):
         '''
         # If no input image provided, generate a random image with noise.
         if img0 is None:
-            img0 = np.random.uniform(size=(512,512,3)) + 100.0
+            img0 = np.random.uniform(size=(224,224,3)) + 100.0
 
         # Define the optimization objective
         t_score = tf.reduce_mean(t_obj)
@@ -243,7 +238,7 @@ class deepdream(object):
         img = tf.expand_dims(img, 0)
         return tf.image.resize_bilinear(img, size)[0,:,:,:]
     
-    def calc_grad_tiled(self, img, t_grad, tile_size = 512):
+    def calc_grad_tiled(self, img, t_grad, tile_size = 224):
         '''
         Compute the value of tensor t_grad over the image in a tiled way.
         Random shifts are applied to the image to blur tile boundaries over 
@@ -266,10 +261,9 @@ class deepdream(object):
         Render user's image with learned pattern from neural network, and output the image.
         The image could be any size.
         '''
-        resize = self.tffunc(np.float32, np.int32)(self.resize)
         # If no input image provided, generate a random image with noise.
         if img0 is None:
-            img0 = np.random.uniform(size = (512,512,3)) + 100.0
+            img0 = np.random.uniform(size = (224,224,3)) + 100.0
 
         # Define the optimization objective
         t_score = tf.reduce_mean(t_obj)
@@ -281,8 +275,8 @@ class deepdream(object):
         octaves = []
         for _ in range(octave_n-1):
             hw = img.shape[:2]
-            lo = resize(img, np.int32(np.float32(hw)/octave_scale))
-            hi = img-resize(lo, hw)
+            lo = self.resize(img, np.int32(np.float32(hw)/octave_scale))
+            hi = img-self.resize(lo, hw)
             img = lo
             octaves.append(hi)
         
@@ -290,7 +284,7 @@ class deepdream(object):
         for octave in range(octave_n):
             if octave>0:
                 hi = octaves[-octave]
-                img = resize(img, hi.shape[:2])+hi
+                img = self.resize(img, hi.shape[:2])+hi
             for _ in range(iter_n):
                 g = self.calc_grad_tiled(img, t_grad)
                 img += g*(step / (np.abs(g).mean()+1e-7))
@@ -305,151 +299,6 @@ class deepdream(object):
         file_path = OUTPUT_DIR + output_filename
         savearray(img, file_path)
         print('Image \"%s\" saved.' %output_filename)
-
-
-    ####################################################
-    # Laplacian Pyramid Gradient Normalization - Start
-    ####################################################
-
-    def lap_split(self, img):
-        '''
-        Split the image into lo and hi frequency components
-        '''
-        with tf.name_scope('split'):
-            lo = tf.nn.conv2d(img, k5x5, [1,2,2,1], 'SAME')
-            lo2 = tf.nn.conv2d_transpose(lo, k5x5*4, tf.shape(img), [1,2,2,1])
-            hi = img-lo2
-        return lo, hi
-
-    def lap_split_n(self, img, n):
-        '''
-        Build Laplacian pyramid with n splits
-        '''
-        levels = []
-        for i in range(n):
-            img, hi = self.lap_split(img)
-            levels.append(hi)
-        levels.append(img)
-        return levels[::-1]
-
-    def lap_merge(self, levels):
-        '''
-        Merge Laplacian pyramid
-        '''
-        img = levels[0]
-        for hi in levels[1:]:
-            with tf.name_scope('merge'):
-                img = tf.nn.conv2d_transpose(img, k5x5*4, tf.shape(hi), [1,2,2,1]) + hi
-        return img
-
-    def normalize_std(self, img, eps = 1e-10):
-        '''
-        Normalize image by making its standard deviation = 1.0
-        '''
-        with tf.name_scope('normalize'):
-            std = tf.sqrt(tf.reduce_mean(tf.square(img)))
-            return img/tf.maximum(std, eps)
-
-    def lap_normalize(self, img, scale_n=4):
-        '''
-        Perform the Laplacian pyramid normalization.
-        '''
-        img = tf.expand_dims(img,0)
-        tlevels = self.lap_split_n(img, scale_n)
-        tlevels = list(map(self.normalize_std, tlevels))
-        out = self.lap_merge(tlevels)
-        return out[0,:,:,:]
-
-    def render_lapnorm(self, t_obj, output_filename, img0 = None, iter_n = 10, step = 1.0, octave_n = 3, octave_scale = 1.4, lap_n = 4):
-
-        # If no input image provided, generate a random image with noise.
-        if img0 is None:
-            img0 = np.random.uniform(size = (512,512,3)) + 100.0
-
-        t_score = tf.reduce_mean(t_obj) # defining the optimization objective
-        t_grad = tf.gradients(t_score, self.t_input)[0] # behold the power of automatic differentiation!
-        # build the laplacian normalization graph
-        resize = self.tffunc(np.float32, np.int32)(self.resize)
-        lap_norm_func = self.tffunc(np.float32)(partial(self.lap_normalize, scale_n = lap_n))
-
-        img = img0.copy()
-        for octave in range(octave_n):
-            if octave>0:
-                hw = np.float32(img.shape[:2])*octave_scale
-                img = resize(img, np.int32(hw))
-            for i in range(iter_n):
-                g = self.calc_grad_tiled(img, t_grad)
-                g = lap_norm_func(g)
-                img += g*step
-                # print('.', end = ' ')
-        
-            # Image normalization
-            img = visstd(img)
-            # Image clip and rescale 256 color
-            img = np.uint8(np.clip(img, 0, 1)*255)
-            # Show image
-            showarray(img)
-        
-        # Save image
-        file_path = OUTPUT_DIR + output_filename
-        savearray(img, file_path)
-        print('Image \"%s\" saved.' %output_filename)
-
-
-    def render_deepdream_lapnorm(self, t_obj, output_filename, img0 = None, iter_n = 10, step = 1.5, octave_n = 4, octave_scale = 1.4, lap_n = 4):
-        '''
-        Render user's image with learned pattern from neural network, and output the image.
-        The image could be any size.
-        '''
-        resize = self.tffunc(np.float32, np.int32)(self.resize)
-        lap_norm_func = self.tffunc(np.float32)(partial(self.lap_normalize, scale_n = lap_n))
-        # If no input image provided, generate a random image with noise.
-        if img0 is None:
-            img0 = np.random.uniform(size = (512,512,3)) + 100.0
-
-        # Define the optimization objective
-        t_score = tf.reduce_mean(t_obj)
-        # Automatic differentiation
-        t_grad = tf.gradients(t_score, self.t_input)[0]
-    
-        # Split the image into a number of octaves
-        img = img0
-        octaves = []
-        for _ in range(octave_n-1):
-            hw = img.shape[:2]
-            lo = resize(img, np.int32(np.float32(hw)/octave_scale))
-            hi = img-resize(lo, hw)
-            img = lo
-            octaves.append(hi)
-        
-        # Generate details octave by octave
-        for octave in range(octave_n):
-            if octave>0:
-                hi = octaves[-octave]
-                img = resize(img, hi.shape[:2])+hi
-            for _ in range(iter_n):
-                g = self.calc_grad_tiled(img, t_grad)
-                g = lap_norm_func(g)
-                #img += g*step
-                img += g*(step / (np.abs(g).mean()+1e-7))
-
-
-            # Image clip and rescale 256 color
-            img = np.uint8(np.clip(img, 0, 255))
-            # Show image
-            showarray(img)
-
-        # Save image
-        file_path = OUTPUT_DIR + output_filename
-        savearray(img, file_path)
-        print('Image \"%s\" saved.' %output_filename)
-
-
-
-    ####################################################
-    # Laplacian Pyramid Gradient Normalization - End
-    ####################################################
-
 
 
     def render_deepdreamvideo():
@@ -560,31 +409,4 @@ class deepdream(object):
         savearray(img, file_path)
         print('Image \"%s\" saved.' %output_filename)
         '''
-
-def main():
-    '''
-    # Picking some internal layer. Note that we use outputs before applying the ReLU nonlinearity
-    # to have non-zero gradients for features with negative initial activations.
-    layer = 'mixed4d_3x3_bottleneck_pre_relu'
-    channel = 139 # picking some feature channel to visualize
-
-    dream = deepdream()
-    #dream_obj = dream.T(layer = layer)[:,:,:,channel]
-    #dream.render_lapnorm(t_obj = dream_obj, output_filename = 'lap_test.jpeg')
-
-
-
-
-    img0 = Image.open('inputs/pilatus800.jpg')
-    img0 = np.float32(img0)
-    dream_obj = dream.T(layer = layer)[:,:,:,channel]
-
-    #dream.render_deepdream(t_obj = dream_obj, img0 = img0, output_filename = 'dd_test.jpeg')
-
-    dream.render_deepdream_lapnorm(t_obj = dream_obj, img0 = img0, output_filename = 'dd_lap_test.jpeg')
-    '''
-
-if __name__ == '__main__':
-
-    main()
 
