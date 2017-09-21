@@ -30,6 +30,9 @@ The development of this API is still in progress. More functions will be added i
 ## 
 
 ### List the available layers and the number of channels
+
+To check the available layer names and channel numbers for the deepdream program. 
+
 Input
 ```shell
 python deepdream_api.py -l
@@ -51,10 +54,13 @@ import/mixed3b_3x3_pre_relu/conv 192
 import/mixed3b_5x5_bottleneck_pre_relu/conv 32
 ...
 ```
-On the left it is the layer name, on the right it is the number of channels in the layer.
+In the output, the layer name is on the left, the number of channels in the layer is on the right.
 
 
 ### Preview the feature pattern of the neural network
+
+To preview the feature pattern learned in a certain channel of a certain layer in the neural network. This is helpful for the user to select layers and channels used for image modification.
+
 Input
 
 ```shell
@@ -67,6 +73,8 @@ Output
 
 
 ### Render the image with the features from the neural network
+
+Apply feature pattern learned in a certain channel of a certain layer in the neural network to the image that the user provided.
 
 Input
 
