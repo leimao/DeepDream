@@ -27,17 +27,18 @@ The development of this API is still in progress. More functions will be added i
 * six
 * argparse
 
-## 
+## Usage
 
 ### List the available layers and the number of channels
 
 To check the available layer names and channel numbers for the deepdream program. 
 
-Input
+*Input*
+
 ```shell
 python deepdream_api.py -l
 ```
-Output
+*Output*
 ```shell
 import/conv2d0_pre_relu/conv 64
 import/conv2d1_pre_relu/conv 64
@@ -61,13 +62,15 @@ In the output, the layer name is on the left, the number of channels in the laye
 
 To preview the feature pattern learned in a certain channel of a certain layer in the neural network. This is helpful for the user to select layers and channels used for image modification.
 
-Input
+*Input*
+
+-p layer_name channel_number, --preview layer_name channel_number
 
 ```shell
 python deepdream_api.py -p mixed4d_3x3_bottleneck_pre_relu 20 feature_pattern.jpeg
 ```
 
-Output
+*Output*
 
 ![](outputs/feature_pattern.jpeg)
 
@@ -76,7 +79,9 @@ Output
 
 Apply feature pattern learned in a certain channel of a certain layer in the neural network to the image that the user provided.
 
-Input
+*Input*
+
+-r image_path layer_name channel_number, --render image_path layer_name channel_number
 
 ```shell
 python deepdream_api.py -r inputs/pilatus800.jpg mixed4d_3x3_bottleneck_pre_relu 20 railgun_deepdream.jpeg
@@ -84,9 +89,19 @@ python deepdream_api.py -r inputs/pilatus800.jpg mixed4d_3x3_bottleneck_pre_relu
 
 ![](inputs/pilatus800.jpg)
 
-Output
+*Output*
 
 ![](outputs/railgun_deepdream.jpeg)
 
+### References
+
+* [Google Official DeepDream Tutorial in Caffe](https://github.com/google/deepdream/blob/master/dream.ipynb)
+([Download]({{ site.url }}/downloads/articles/2017-09-14-Google-DeepDream-Python/dream.ipynb))
+* [Google Official DeepDream Tutorial in TensorFlow](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/examples/tutorials/deepdream/deepdream.ipynb)
+([Download]({{ site.url }}/downloads/articles/2017-09-14-Google-DeepDream-Python/deepdream.ipynb))
+* [Google Research Blog](https://research.googleblog.com/2015/06/inceptionism-going-deeper-into-neural.html)
+* [Siraj Raval's Video Tutorial](https://www.youtube.com/watch?v=MrBzgvUNr4w) (I know this guy from Udacity by the way -_-)
+* [Siraj Raval's Code](https://github.com/llSourcell/deep_dream_challenge/blob/master/deep_dream.py)
+([Download]({{ site.url }}/downloads/articles/2017-09-14-Google-DeepDream-Python/deep_dream.py))
 
 
