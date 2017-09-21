@@ -40,7 +40,7 @@ def main():
 
         dream = deepdream()
         dream_obj = dream.T(layer = layer)[:,:,:,channel]
-        dream.render_naive(t_obj = dream_obj, output_filename = output_filename, iter_n = 100)
+        dream.render_naive(t_obj = dream_obj, output_filename = output_filename, iter_n = 30)
 
     if args.render:
         image_path = str(args.render[0])
@@ -52,7 +52,7 @@ def main():
         img0 = Image.open(image_path)
         img0 = np.float32(img0)
         dream_obj = dream.T(layer = layer)[:,:,:,channel]
-        dream.render_deepdream(t_obj = dream_obj, img0 = img0, output_filename = output_filename, iter_n = 100)
+        dream.render_deepdream(t_obj = dream_obj, img0 = img0, output_filename = output_filename, iter_n = 30)
 
 
 if __name__ == '__main__':
